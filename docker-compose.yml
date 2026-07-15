@@ -1,0 +1,23 @@
+name: order-management
+
+services:
+    database:
+        container_name: database
+        image: postgres:12.8
+        restart: always
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+            - 5432:5432
+        volumes:
+            - db:/var/lib/postgresql/data
+    app:
+        build: .
+        ports:
+            - "8080:8080"
+        restart: unless-stopped
+
+volumes:
+    db:

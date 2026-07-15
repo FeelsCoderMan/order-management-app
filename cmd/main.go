@@ -1,37 +1,37 @@
 package main
 
 import (
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/FeelsCoderMan/order-management-app/internal/database"
 	"github.com/FeelsCoderMan/order-management-app/internal/handler"
 	"github.com/FeelsCoderMan/order-management-app/internal/repository"
 	"github.com/FeelsCoderMan/order-management-app/internal/service"
+	"github.com/FeelsCoderMan/order-management-app/internal/utils"
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	logger := log.New(os.Stdout, "", log.LstdFlags)
+	mainLogger := utils.GetLogger("[main] ")
 	db, err := database.InitPostgres()
 
 	if err != nil {
-		logger.Fatal(err)
+		mainLogger.Fatal(err)
 	}
 
+	registerLogger := utils.GetLogger("[Register] ")
 	userRepository := repository.NewUserRepository(
 		db,
 	)
 
 	authService := service.NewAuthService(
 		userRepository,
-		logger,
+		registerLogger,
 	)
 
 	authHandler := handler.NewAuthHandler(
 		authService,
-		logger,
+		registerLogger,
 	)
 
 	router := mux.NewRouter()
@@ -39,9 +39,9 @@ func main() {
 	router.HandleFunc("/login", authHandler.Login)
 	// router.HandleFunc("/logout", authHandler.Logout)
 
-	logger.Println("Server running on :8080")
+	mainLogger.Println("Server running on :8080")
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
-		logger.Fatal(err)
+		mainLogger.Fatal(err)
 	}
 }

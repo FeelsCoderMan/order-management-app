@@ -13,5 +13,4 @@ type SuccessResponse struct {
 type SuccessLoginResponse struct {
 	Success bool       `default:"true" json:"success"`
 	AccessToken string `json:"accessToken"`
-
 }

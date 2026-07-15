@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/creasty/defaults"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -13,11 +15,24 @@ func FromJSON(r *http.Request, v any) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
-func WriteJSON(w http.ResponseWriter, status int, v any) error {
+func WriteJSON[T any](w http.ResponseWriter, status int, v *T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	logger := GetLogger("[utils-json] ")
 
-	return json.NewEncoder(w).Encode(v)
+	if v == nil {
+		logger.Println("WriteJSON called with nil response body")
+		return
+	}
+
+	if err := defaults.Set(v); err != nil {
+		logger.Printf("Could not apply defaults: %v\n", err)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		logger.Printf("Could not write json response: %v\n", err)
+	}
 }
 
 func ValidateStruct(logger *log.Logger, v any) []string {
@@ -50,4 +65,8 @@ func ValidateStruct(logger *log.Logger, v any) []string {
 	}
 
 	return nil
+}
+
+func GetLogger(prefix string) *log.Logger {
+	return log.New(os.Stdout, prefix, log.LstdFlags)
 }

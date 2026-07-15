@@ -30,21 +30,21 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err := utils.FromJSON(r, &userReq); err != nil {
 		h.logger.Println("Failed parsing register request: ", err)
 
-		utils.WriteJSON(w, http.StatusBadRequest, dto.ErrorResponse{
+		utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 			Message: []string{"Invalid request body"},
 		})
 		return
 	}
 
 	if errs := utils.ValidateStruct(h.logger, userReq); len(errs) > 0 {
-		utils.WriteJSON(w, http.StatusBadRequest, dto.ErrorResponse{
+		utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 			Message: errs,
 		})
 		return
 	}
 
 	if err := validation.ValidateUsername(userReq.Username); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, dto.ErrorResponse{
+		utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 			Message: []string{err.Error()},
 		})
 		return
@@ -54,12 +54,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err := h.authService.Register(userReq); err != nil {
 		switch {
 		case errors.Is(err, service.ErrEmailAlreadyUsed):
-			utils.WriteJSON(w, http.StatusConflict, dto.ErrorResponse{
+			utils.WriteJSON(w, http.StatusConflict, &dto.ErrorResponse{
 				Message: []string{"Email is already used"},
 			})
 		default:
 			h.logger.Println("Register user failed: ", err)
-			utils.WriteJSON(w, http.StatusInternalServerError, dto.ErrorResponse{
+			utils.WriteJSON(w, http.StatusInternalServerError, &dto.ErrorResponse{
 				Message: []string{"Something went wrong"},
 			})
 		}
@@ -67,7 +67,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, dto.SuccessResponse{
+	utils.WriteJSON(w, http.StatusCreated, &dto.SuccessResponse{
 		Message: "User registered successfully.",
 	});
 }
@@ -78,14 +78,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := utils.FromJSON(r, &loginReq); err != nil {
 		h.logger.Println("Failed to parse login request: ", err)
 
-		utils.WriteJSON(w, http.StatusBadRequest, dto.ErrorResponse{
+		utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 			Message: []string{"Invalid request body"},
 		})
 		return
 	}
 
 	if errs := utils.ValidateStruct(h.logger, loginReq); len(errs) > 0 {
-		utils.WriteJSON(w, http.StatusBadRequest, dto.ErrorResponse{
+		utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 			Message: errs,
 		})
 		return
@@ -96,11 +96,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidCredentials):
-			utils.WriteJSON(w, http.StatusUnauthorized, dto.ErrorResponse{
+			utils.WriteJSON(w, http.StatusUnauthorized, &dto.ErrorResponse{
 				Message: []string{"Invalid email or password"},
 			})
 		default:
-			utils.WriteJSON(w, http.StatusInternalServerError, dto.ErrorResponse{
+			utils.WriteJSON(w, http.StatusInternalServerError, &dto.ErrorResponse{
 				Message: []string{"Something went wrong"},
 			})
 		}
@@ -108,7 +108,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, dto.SuccessLoginResponse{
+	utils.WriteJSON(w, http.StatusOK, &dto.SuccessLoginResponse{
 		AccessToken: accessToken,
 	})
 }

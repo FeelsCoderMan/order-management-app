@@ -15,6 +15,8 @@ type userRepository struct {
 
 type UserRepository interface {
 	Create(model.User) error
+	// TODO: Handle uniqueness of username and email for register flow
+	// FindByEmail will still be used for login flow
 	FindByEmail(string) (*model.User, error)
 }
 

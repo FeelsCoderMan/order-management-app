@@ -13,15 +13,21 @@ services:
             - 5432:5432
         volumes:
             - db:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
 
     app:
         container_name: app
         build: .
         depends_on:
-            - database
+            database:
+                condition: service_healthy
         ports:
             - "8080:8080"
-        restart: no
+        restart: unless-stopped
         env_file:
             - .env
 

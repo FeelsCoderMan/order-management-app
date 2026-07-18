@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/FeelsCoderMan/order-management-app/internal/repository"
-	"github.com/FeelsCoderMan/order-management-app/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -54,7 +53,6 @@ func (m *AuthMiddleware) RequireAuthenticate(h http.Handler) http.Handler {
 		}
 
 		if token == nil || !token.Valid {
-			utils.WriteJSON(w, http.StatusUnauthorized, &UnauthorizedResponse{})
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

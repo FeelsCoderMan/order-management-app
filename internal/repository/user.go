@@ -17,7 +17,8 @@ type UserRepository interface {
 	Create(model.User) error
 	// TODO: Handle uniqueness of username and email for register flow
 	// FindByEmail will still be used for login flow
-	FindByEmail(string) (*model.User, error)
+	GetUserByEmail(string) (*model.User, error)
+	GetUserById(string) (*model.User, error)
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -30,10 +31,24 @@ func (r *userRepository) Create(user model.User) error {
 	return r.db.Create(&user).Error
 }
 
-func (r *userRepository) FindByEmail(email string) (*model.User, error) {
+func (r *userRepository) GetUserByEmail(email string) (*model.User, error) {
 	var user model.User;
 
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *userRepository) GetUserById(id string) (*model.User, error) {
+	var user model.User;
+
+	if err := r.db.Where("id = ?", id).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
 		}

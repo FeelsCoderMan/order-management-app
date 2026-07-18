@@ -9,8 +9,3 @@ type SuccessResponse struct {
 	Success bool   `default:"true" json:"success"`
 	Message string `json:"message"`
 }
-
-type SuccessLoginResponse struct {
-	Success bool       `default:"true" json:"success"`
-	AccessToken string `json:"accessToken"`
-}

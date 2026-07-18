@@ -3,10 +3,12 @@ package service
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/FeelsCoderMan/order-management-app/internal/dto"
 	"github.com/FeelsCoderMan/order-management-app/internal/model"
 	"github.com/FeelsCoderMan/order-management-app/internal/repository"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,7 +25,7 @@ type authService struct {
 
 type AuthService interface {
 	Register(dto.CreateUserRequest) error
-	Login(dto.LoginRequest) (string, error)
+	Login(dto.LoginRequest) (string, time.Time, error)
 }
 
 func NewAuthService(userRepository repository.UserRepository, logger *log.Logger) AuthService {
@@ -34,7 +36,7 @@ func NewAuthService(userRepository repository.UserRepository, logger *log.Logger
 }
 
 func (s *authService) Register(req dto.CreateUserRequest) error {
-	existingUser, err := s.userRepository.FindByEmail(req.Email)
+	existingUser, err := s.userRepository.GetUserByEmail(req.Email)
 
 	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
 		s.logger.Println("Failed checking existing user: ", err)

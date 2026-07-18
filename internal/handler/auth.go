@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/FeelsCoderMan/order-management-app/internal/dto"
 	"github.com/FeelsCoderMan/order-management-app/internal/service"
@@ -91,12 +92,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := h.authService.Login(loginReq);
+	accessToken, expiresAt, err := h.authService.Login(loginReq);
 
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidCredentials):
-			utils.WriteJSON(w, http.StatusUnauthorized, &dto.ErrorResponse{
+			utils.WriteJSON(w, http.StatusBadRequest, &dto.ErrorResponse{
 				Message: []string{"Invalid email or password"},
 			})
 		default:
@@ -110,8 +111,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, &dto.SuccessLoginResponse{
 		AccessToken: accessToken,
+		ExpiresAt: expiresAt.UTC().Format(time.RFC3339),
 	})
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }

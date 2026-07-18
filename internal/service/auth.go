@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/FeelsCoderMan/order-management-app/internal/config"
 	"github.com/FeelsCoderMan/order-management-app/internal/dto"
 	"github.com/FeelsCoderMan/order-management-app/internal/model"
 	"github.com/FeelsCoderMan/order-management-app/internal/repository"
@@ -19,6 +20,7 @@ var (
 )
 
 type authService struct {
+	authConfig  config.AuthConfig
 	userRepository repository.UserRepository
 	logger *log.Logger
 }
@@ -28,8 +30,9 @@ type AuthService interface {
 	Login(dto.LoginRequest) (string, time.Time, error)
 }
 
-func NewAuthService(userRepository repository.UserRepository, logger *log.Logger) AuthService {
+func NewAuthService(authConfig config.AuthConfig, userRepository repository.UserRepository, logger *log.Logger) AuthService {
 	return &authService{
+		authConfig: authConfig,
 		userRepository: userRepository,
 		logger: logger,
 	}
@@ -39,7 +42,7 @@ func (s *authService) Register(req dto.CreateUserRequest) error {
 	existingUser, err := s.userRepository.GetUserByEmail(req.Email)
 
 	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
-		s.logger.Println("Failed checking existing user: ", err)
+		s.logger.Println("Failed getting user by email: ", err)
 		return ErrInternal
 	}
 
@@ -73,6 +76,7 @@ func (s *authService) Register(req dto.CreateUserRequest) error {
 
 func (s *authService) Login(req dto.LoginRequest) (string, time.Time, error) {
 	existingUser, err := s.userRepository.GetUserByEmail(req.Email)
+	s.logger.Printf("User: %v", existingUser)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
@@ -91,13 +95,14 @@ func (s *authService) Login(req dto.LoginRequest) (string, time.Time, error) {
 	}
 
 	now := time.Now()
-	expiresAt := now.Add(15 * time.Minute)
+	expiresAt := now.Add(s.authConfig.AccessExpires)
+	s.logger.Println("Existing User ID: ", existingUser.ID)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		IssuedAt : jwt.NewNumericDate(now),
 		ExpiresAt: jwt.NewNumericDate(expiresAt),
 		Subject: existingUser.ID,
 	})
-	accessToken, err := token.SignedString([]byte("test"))
+	accessToken, err := token.SignedString([]byte(s.authConfig.AccessSecret))
 
 	if err != nil {
 		s.logger.Println("Failed signing token: ", err)

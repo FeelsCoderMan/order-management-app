@@ -12,7 +12,6 @@ import (
 	"github.com/FeelsCoderMan/order-management-app/internal/validation"
 )
 
-
 type AuthHandler struct {
 	authService service.AuthService
 	logger *log.Logger
@@ -92,6 +91,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Add refresh token implementation
 	accessToken, expiresAt, err := h.authService.Login(loginReq);
 
 	if err != nil {

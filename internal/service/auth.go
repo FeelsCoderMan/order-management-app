@@ -71,25 +71,38 @@ func (s *authService) Register(req dto.CreateUserRequest) error {
 	return nil
 }
 
-func (s *authService) Login(req dto.LoginRequest) (string, error) {
-	existingUser, err := s.userRepository.FindByEmail(req.Email)
+func (s *authService) Login(req dto.LoginRequest) (string, time.Time, error) {
+	existingUser, err := s.userRepository.GetUserByEmail(req.Email)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
-			return "", ErrInvalidCredentials
+			return "", time.Time{}, ErrInvalidCredentials
 		}
 
 		s.logger.Println("Failed retrieving user: ", err)
-		return "", ErrInternal
+		return "", time.Time{}, ErrInternal
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
 		[]byte(existingUser.Password),
 		[]byte(req.Password),
 	); err != nil {
-		return "", ErrInvalidCredentials
+		return "", time.Time{}, ErrInvalidCredentials
 	}
 
-	// TODO: generate jwt token
-	return "", nil
+	now := time.Now()
+	expiresAt := now.Add(15 * time.Minute)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		IssuedAt : jwt.NewNumericDate(now),
+		ExpiresAt: jwt.NewNumericDate(expiresAt),
+		Subject: existingUser.ID,
+	})
+	accessToken, err := token.SignedString([]byte("test"))
+
+	if err != nil {
+		s.logger.Println("Failed signing token: ", err)
+		return "", time.Time{}, ErrInternal
+	}
+
+	return accessToken, expiresAt, nil
 }

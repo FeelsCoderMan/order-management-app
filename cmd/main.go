@@ -20,24 +20,31 @@ func main() {
 	}
 
 	registerLogger := utils.GetLogger("[Register] ")
-	userRepository := repository.NewUserRepository(
-		db,
-	)
+	// authMiddlewareLogger := utils.GetLogger("[AuthMiddleware] ")
 
+	userRepository := repository.NewUserRepository(db)
 	authService := service.NewAuthService(
 		userRepository,
 		registerLogger,
 	)
-
 	authHandler := handler.NewAuthHandler(
 		authService,
 		registerLogger,
 	)
+	// authMiddleware := middleware.NewAuthMiddleware(
+	// 	authMiddlewareLogger,
+	// 	userRepository,
+	// )
 
 	router := mux.NewRouter()
-	router.HandleFunc("/register", authHandler.Register)
-	router.HandleFunc("/login", authHandler.Login)
+	publicRouter := router.PathPrefix("/").Subrouter()
+	// TODO: Add private subrouter to use auth middleware
+	// privateRouter := router.PathPrefix("/").Subrouter()
+	// TODO: Add restricted HTTP Methods for each handler
+	publicRouter.HandleFunc("/register", authHandler.Register)
+	publicRouter.HandleFunc("/login", authHandler.Login)
 	// router.HandleFunc("/logout", authHandler.Logout)
+	// privateRouter.Use(authMiddleware.RequireAuthenticate)
 
 	mainLogger.Println("Server running on :8080")
 
